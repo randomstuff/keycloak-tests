@@ -1,0 +1,49 @@
+#!/bin/sh
+
+docker=podman
+
+run_keycloak() {
+
+    "$docker" run --rm --name poc_keycloak \
+        -e KEYCLOAK_ADMIN=admin \
+        -e KEYCLOAK_ADMIN_PASSWORD=admin \
+        --network=host \
+        -v "$(pwd)/import:/opt/keycloak/data/import" \
+        quay.io/keycloak/keycloak:25.0 \
+        start-dev \
+        --http-port=8180 --import-realm
+
+}
+
+run_client() {
+    FLASK_APP=client.py flask run -p8080
+}
+
+run_rs() {
+    FLASK_APP=rs.py flask run -p8081
+}
+
+case "$1" in
+    run)
+        case "$2" in
+            keycloak)
+                run_keycloak
+            ;;
+            client)
+                run_client
+            ;;
+            rs)
+                run_rs
+            ;;
+            *)
+                exit 1
+            ;;
+        esac
+    ;;
+    browse)
+        xdg-open http://localhost:8080/
+    ;;
+    *)
+        exit 1
+    ;;
+esac

@@ -1,0 +1,125 @@
+{
+    "realm": "poc",
+    "enabled": true,
+    "userManagedAccessAllowed": true,
+    "requiredCredentials": [
+      "password"
+    ],
+    "users": [
+      {
+        "username": "alice",
+        "firstName": "Alice",
+        "lastName": "Liddel",
+        "email": "alice@example.com",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "alice"
+          }
+        ],
+        "realmRoles": [
+          "user"
+        ]
+      },
+      {
+        "username": "bob",
+        "firstName": "Bob",
+        "lastName": "Beedle",
+        "email": "bob@example.com",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "bob"
+          }
+        ],
+        "realmRoles": [
+          "user"
+        ]
+      }
+    ],
+    "roles": {
+      "realm": [
+        {
+          "name": "user",
+          "description": "User privileges"
+        }
+      ]
+    },
+    "clients": [
+  
+      {
+        "clientId": "client",
+        "enabled": true,
+        "baseUrl": "http://localhost:8080",
+        "adminUrl": "http://localhost:8080",
+        "bearerOnly": false,
+        "redirectUris": [
+          "http://localhost:8080/*"
+        ],
+        "secret": "client-secret",
+        "authorizationServicesEnabled": true,
+        "directAccessGrantsEnabled": true
+      },
+
+      {
+        "clientId": "rs",
+        "enabled": true,
+        "baseUrl": "http://localhost:8081",
+        "adminUrl": "http://localhost:8081",
+        "bearerOnly": false,
+        "redirectUris": [
+          "http://localhost:8081/*"
+        ],
+        "secret": "rs-secret",
+        "authorizationServicesEnabled": true,
+        "directAccessGrantsEnabled": true,
+        "authorizationSettings": {
+          "resources": [
+            {
+              "name": "Root Protected Resource",
+              "uri": "/*",
+              "type": "http://rs/protected/resource",
+              "scopes": [
+                {
+                  "name": "access"
+                }
+              ]
+            }
+          ],
+          "policies": [
+            {
+              "name": "Realm User",
+              "description": "",
+              "type": "role",
+              "logic": "POSITIVE",
+              "decisionStrategy": "UNANIMOUS",
+              "config": {
+                "fetchRoles": "false",
+                "roles": "[{\"id\":\"user\",\"required\":false}]"
+              }
+            },
+            {
+              "name": "Protected Resource Permission",
+              "description": "A policy that defines access to any protected resource",
+              "type": "resource",
+              "logic": "POSITIVE",
+              "decisionStrategy": "UNANIMOUS",
+              "config": {
+                "resources": "[\"Root Protected Resource\"]",
+                "applyPolicies": "[\"Realm User\"]"
+              }
+            }
+          ],
+          "scopes": [
+            {
+              "name": "access"
+            }
+          ]
+        }
+      }
+  
+    ]
+  }
+  
