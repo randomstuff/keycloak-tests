@@ -8,6 +8,42 @@ For example,
 * it uses hardcoded credentials (and bad),
 * etc.
 
+## Execution
+
+### Running the test
+
+`test_rs_resource.py` is a standalone program
+which tests several UMA-related exchanges
+with a KeyCloak instance.
+
+~~~sh
+./poc run keycloak
+~~~
+
+~~~sh
+python3 ./test_rs_resource.py
+~~~
+
+### Running the environment
+
+We can execute an execution environment with a KeyCloak instance, a client application and a resource server.
+
+~~~sh
+./poc run keycloak
+~~~
+
+~~~sh
+./poc run client
+~~~
+
+~~~sh
+./poc run rs
+~~~
+
+~~~sh
+./poc browse
+~~~
+
 ## Environment
 
 ### Components
@@ -55,7 +91,7 @@ For the following request:
 [
     {
         "resource_id": "...",
-        "resource_scopes": ["access"],
+        "resource_scopes": ["read"],
     }
 ]
 ~~~
@@ -108,7 +144,7 @@ RPT content:
     "permissions": [
       {
         "scopes": [
-          "access"
+          "read"
         ],
         "rsid": "0ce7280a-63ac-455f-aa26-f50b81a41ba9",
         "rsname": "Protected Resource"

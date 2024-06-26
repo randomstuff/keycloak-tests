@@ -83,7 +83,7 @@
               "type": "http://rs/protected/resource",
               "scopes": [
                 {
-                  "name": "access"
+                  "name": "read"
                 }
               ]
             }
@@ -101,7 +101,7 @@
               }
             },
             {
-              "name": "Protected Resource Permission",
+              "name": "Permission to access root resource",
               "description": "A policy that defines access to any protected resource",
               "type": "resource",
               "logic": "POSITIVE",
@@ -110,11 +110,23 @@
                 "resources": "[\"Root Protected Resource\"]",
                 "applyPolicies": "[\"Realm User\"]"
               }
+            },
+            {
+              "name": "Permission to access type resource1",
+              "description": "A policy that defines access to any protected resource",
+              "type": "resource",
+              "logic": "POSITIVE",
+              "decisionStrategy": "UNANIMOUS",
+              "config": {
+                "defaultResourceType": "http://www.example.com/resource1",
+                "resources": "[\"Root Protected Resource\"]",
+                "applyPolicies": "[\"Realm User\"]"
+              }
             }
           ],
           "scopes": [
             {
-              "name": "access"
+              "name": "read"
             }
           ]
         }

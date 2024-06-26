@@ -15,7 +15,6 @@ JWT_TOKEN_TYPE_URN = "urn:ietf:params:oauth:token-type:jwt"
 AS_URI = "http://localhost:8180/realms/poc"
 OIDC_CONFIG_ENDPOINT = AS_URI + "/.well-known/openid-configuration"
 UMA2_CONFIG_ENDPOINT = AS_URI + "/.well-known/uma2-configuration"
-TOKEN_ENDPOINT = AS_URI + "/protocol/openid-connect/token"
 
 CLIENT_URI = "http://localhost:8080"
 REDIRECT_URI = "http://localhost:8080/oidc/callback"

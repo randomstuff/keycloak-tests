@@ -7,13 +7,12 @@ app = Flask(__name__)
 
 AS_URI = "http://localhost:8180/realms/poc"
 UMA2_CONFIG_ENDPOINT = AS_URI + "/.well-known/uma2-configuration"
-TOKEN_ENDPOINT = AS_URI + "/protocol/openid-connect/token"
 
 CLIENT_ID = "rs"
 CLIENT_SECRET = "rs-secret"
 CLIENT_BASIC_AUTHZ = HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
 
-SCOPE = "access"
+SCOPE = "read"
 
 ROOT_RESOURCE_NAME = "Root Protected Resource"
 
