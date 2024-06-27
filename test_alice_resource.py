@@ -8,13 +8,13 @@
 # according to https://www.keycloak.org/docs/latest/authorization_services/#managing-resources-remotely
 # > In the future, we should be able to allow users to control their own resources [..]
 
-from urllib.parse import urlencode
 import secrets
-import json
 
 import requests
 from requests import Response
-from requests.auth import HTTPBasicAuth, AuthBase
+from requests.auth import HTTPBasicAuth
+
+from common import BearerAuth, log_response
 
 JWT_TOKEN_TYPE_URN = "urn:ietf:params:oauth:token-type:jwt"
 
@@ -22,44 +22,17 @@ AS_URI = "http://localhost:8180/realms/poc"
 OIDC_CONFIG_ENDPOINT = AS_URI + "/.well-known/openid-configuration"
 UMA2_CONFIG_ENDPOINT = AS_URI + "/.well-known/uma2-configuration"
 
-CLIENT_URI = "http://localhost:8080"
-CLIENT_ID = "client"
-CLIENT_SECRET = "client-secret"
+CLIENT_URI = "http://localhost:8091"
+CLIENT_ID = "client1"
+CLIENT_SECRET = "client1-secret"
 CLIENT_BASIC_AUTH = HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
 
-RS_ID = "rs"
-RS_SECRET = "rs-secret"
-RS_BASIC_AUTH = HTTPBasicAuth(RS_ID, RS_SECRET)
+RS1_ID = "rs1"
+RS1_SECRET = "rs1-secret"
+RS1_BASIC_AUTH = HTTPBasicAuth(RS1_ID, RS1_SECRET)
 
 ALICE_LOGIN = "alice"
 ALICE_PASSWORD = "alice"
-
-
-class BearerAuth(AuthBase):
-
-    def __init__(self, token):
-        self.token = token
-
-    def __eq__(self, other):
-        return all(
-            [
-                self.token == getattr(other, "token", None),
-            ]
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __call__(self, r):
-        r.headers["Authorization"] = "Bearer " + self.token
-        return r
-
-
-def log_response(response: Response) -> Response:
-    if response.headers.get("content-type") == "application/json":
-        print(f"<- {response.status_code}: {json.dumps(response.json(), indent=2)}")
-    else:
-        print(f"<- {response.status_code}")
 
 
 def json_response(response: Response):
@@ -83,7 +56,7 @@ permission_endpoint = uma2_config["permission_endpoint"]
 print("Request Alice's PAT with scope=uma_protection")
 alice_pat_response = requests.post(
     uma2_token_endpoint,
-    auth=RS_BASIC_AUTH,
+    auth=RS1_BASIC_AUTH,
     data={
         "grant_type": "password",
         "username": ALICE_LOGIN,
@@ -98,7 +71,7 @@ log_response(alice_pat_response)
 print("Request Alice's PAT without scope")
 alice_pat_response = requests.post(
     uma2_token_endpoint,
-    auth=RS_BASIC_AUTH,
+    auth=RS1_BASIC_AUTH,
     data={
         "grant_type": "password",
         "username": ALICE_LOGIN,

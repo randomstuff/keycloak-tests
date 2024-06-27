@@ -52,11 +52,13 @@ We can execute an execution environment with a KeyCloak instance, a client appli
 * `client.py`, client application (web based)
 * `rs.py`, Target/true resource server
 
-| Application | URL                   | client_id | client_secret
-|-------------|-----------------------|-----------|----
-| Keycloak    |http://localhost:81080 |           |
-| Client      |http://localhost:81081 | client    | client-secret
-| RS          |http://localhost:81082 | rs        | rs-secret
+| Application | URL                  | client_id | client_secret
+|-------------|----------------------|-----------|----
+| Keycloak    |http://localhost:8180 |           |
+| Client1     |http://localhost:8091 | client1   | client1-secret
+| Client2     |http://localhost:8092 | client2   | client2-secret
+| RS1         |http://localhost:8081 | rs1       | rs1-secret
+| RS2         |http://localhost:8082 | rs2       | rs2-secret
 
 ### Users
 
@@ -68,9 +70,10 @@ We can execute an execution environment with a KeyCloak instance, a client appli
 
 ### Protected resources
 
-| Application | Ressource name          | Scope
-|-------------|-------------------------|--------
-| Client      | Root Protected Resource | access
+| Application | Ressource name                 | Scope
+|-------------|--------------------------------|--------
+| RS1         | Default Protected Resource RS1 | access
+| RS2         | Default Protected Resource RS2 | access
 
 
 ## Unexpected behaviors

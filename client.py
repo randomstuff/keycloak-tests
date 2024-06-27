@@ -1,5 +1,6 @@
 from urllib.parse import urlencode
 import secrets
+import os
 
 import html
 from werkzeug.datastructures import WWWAuthenticate
@@ -10,17 +11,20 @@ from requests.auth import HTTPBasicAuth, AuthBase
 app = Flask(__name__)
 app.config.update(TESTING=True, SECRET_KEY=secrets.token_urlsafe(20))
 
+INDEX = int(os.environ.get("INDEX", 1))
+PORT = 8090 + INDEX
+
 JWT_TOKEN_TYPE_URN = "urn:ietf:params:oauth:token-type:jwt"
 
 AS_URI = "http://localhost:8180/realms/poc"
 OIDC_CONFIG_ENDPOINT = AS_URI + "/.well-known/openid-configuration"
 UMA2_CONFIG_ENDPOINT = AS_URI + "/.well-known/uma2-configuration"
 
-CLIENT_URI = "http://localhost:8080"
-REDIRECT_URI = "http://localhost:8080/oidc/callback"
+CLIENT_URI = f"http://localhost:{PORT}"
+REDIRECT_URI = f"http://localhost:{PORT}/oidc/callback"
 
-CLIENT_ID = "client"
-CLIENT_SECRET = "client-secret"
+CLIENT_ID = f"client{INDEX}"
+CLIENT_SECRET = f"client{INDEX}-secret"
 
 CLIENT_BASIC_AUTHZ = HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
 

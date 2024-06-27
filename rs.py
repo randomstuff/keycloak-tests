@@ -2,19 +2,22 @@ from werkzeug.datastructures import WWWAuthenticate
 from flask import Flask, request, Response
 import requests
 from requests.auth import HTTPBasicAuth, AuthBase
+import os
+
+INDEX = int(os.environ.get("INDEX", 1))
 
 app = Flask(__name__)
 
 AS_URI = "http://localhost:8180/realms/poc"
 UMA2_CONFIG_ENDPOINT = AS_URI + "/.well-known/uma2-configuration"
 
-CLIENT_ID = "rs"
-CLIENT_SECRET = "rs-secret"
+CLIENT_ID = f"rs{INDEX}"
+CLIENT_SECRET = f"rs{INDEX}-secret"
 CLIENT_BASIC_AUTHZ = HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
 
 SCOPE = "read"
 
-ROOT_RESOURCE_NAME = "Root Protected Resource"
+ROOT_RESOURCE_NAME = f"Default Protected Resource RS{INDEX}"
 
 
 class BearerAuth(AuthBase):

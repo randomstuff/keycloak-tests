@@ -50,21 +50,34 @@
     "clients": [
   
       {
-        "clientId": "client",
+        "clientId": "client1",
         "enabled": true,
-        "baseUrl": "http://localhost:8080",
-        "adminUrl": "http://localhost:8080",
+        "baseUrl": "http://localhost:8091",
+        "adminUrl": "http://localhost:8091",
         "bearerOnly": false,
         "redirectUris": [
-          "http://localhost:8080/*"
+          "http://localhost:8091/*"
         ],
-        "secret": "client-secret",
+        "secret": "client1-secret",
+        "authorizationServicesEnabled": true,
+        "directAccessGrantsEnabled": true
+      },
+      {
+        "clientId": "client2",
+        "enabled": true,
+        "baseUrl": "http://localhost:8092",
+        "adminUrl": "http://localhost:8092",
+        "bearerOnly": false,
+        "redirectUris": [
+          "http://localhost:8092/*"
+        ],
+        "secret": "client2-secret",
         "authorizationServicesEnabled": true,
         "directAccessGrantsEnabled": true
       },
 
       {
-        "clientId": "rs",
+        "clientId": "rs1",
         "enabled": true,
         "baseUrl": "http://localhost:8081",
         "adminUrl": "http://localhost:8081",
@@ -72,15 +85,15 @@
         "redirectUris": [
           "http://localhost:8081/*"
         ],
-        "secret": "rs-secret",
+        "secret": "rs1-secret",
         "authorizationServicesEnabled": true,
         "directAccessGrantsEnabled": true,
         "authorizationSettings": {
           "resources": [
             {
-              "name": "Root Protected Resource",
+              "name": "Default Protected Resource RS1",
               "uri": "/*",
-              "type": "http://rs/protected/resource",
+              "type": "http://www.example.com/resource1",
               "scopes": [
                 {
                   "name": "read"
@@ -101,14 +114,86 @@
               }
             },
             {
-              "name": "Permission to access root resource",
+              "name": "Permission to access type resource1",
               "description": "A policy that defines access to any protected resource",
               "type": "resource",
               "logic": "POSITIVE",
               "decisionStrategy": "UNANIMOUS",
               "config": {
-                "resources": "[\"Root Protected Resource\"]",
+                "defaultResourceType": "http://www.example.com/resource1",
                 "applyPolicies": "[\"Realm User\"]"
+              }
+            },
+            {
+              "name": "For client1 only",
+              "description": "",
+              "type": "client",
+              "logic": "POSITIVE",
+              "decisionStrategy": "UNANIMOUS",
+              "config": {
+                "clients": "[\"client1\"]"
+              }
+            },
+            {
+              "name": "Write allowed for client1",
+              "description": "",
+              "type": "scope",
+              "logic": "POSITIVE",
+              "decisionStrategy": "UNANIMOUS",
+              "config": {
+                "defaultResourceType": "http://www.example.com/resource1",
+                "applyPolicies": "[\"For client1 only\"]",
+                "scopes": "[\"write\"]"
+              }
+            }
+          ],
+          "scopes": [
+            {
+              "name": "read"
+            },
+            {
+              "name": "write"
+            }
+          ]
+        }
+      },
+
+
+      {
+        "clientId": "rs2",
+        "enabled": true,
+        "baseUrl": "http://localhost:8082",
+        "adminUrl": "http://localhost:8082",
+        "bearerOnly": false,
+        "redirectUris": [
+          "http://localhost:8082/*"
+        ],
+        "secret": "rs2-secret",
+        "authorizationServicesEnabled": true,
+        "directAccessGrantsEnabled": true,
+        "authorizationSettings": {
+          "resources": [
+            {
+              "name": "Default Protected Resource RS2",
+              "uri": "/*",
+              "type": "http://www.example.com/resource1",
+              "scopes": [
+                {
+                  "name": "read"
+                }
+              ]
+            }
+          ],
+          "policies": [
+            {
+              "name": "Realm User",
+              "description": "",
+              "type": "role",
+              "logic": "POSITIVE",
+              "decisionStrategy": "UNANIMOUS",
+              "config": {
+                "fetchRoles": "false",
+                "roles": "[{\"id\":\"user\",\"required\":false}]"
               }
             },
             {
@@ -119,14 +204,38 @@
               "decisionStrategy": "UNANIMOUS",
               "config": {
                 "defaultResourceType": "http://www.example.com/resource1",
-                "resources": "[\"Root Protected Resource\"]",
                 "applyPolicies": "[\"Realm User\"]"
+              }
+            },
+            {
+              "name": "For client1 only",
+              "description": "",
+              "type": "client",
+              "logic": "POSITIVE",
+              "decisionStrategy": "UNANIMOUS",
+              "config": {
+                "clients": "[\"client1\"]"
+              }
+            },
+            {
+              "name": "Write allowed for client1",
+              "description": "",
+              "type": "scope",
+              "logic": "POSITIVE",
+              "decisionStrategy": "UNANIMOUS",
+              "config": {
+                "defaultResourceType": "http://www.example.com/resource1",
+                "applyPolicies": "[\"For client1 only\"]",
+                "scopes": "[\"write\"]"
               }
             }
           ],
           "scopes": [
             {
               "name": "read"
+            },
+            {
+              "name": "write"
             }
           ]
         }
