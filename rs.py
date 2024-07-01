@@ -4,6 +4,8 @@ import requests
 from requests.auth import HTTPBasicAuth, AuthBase
 import os
 
+from common import parse_bearer
+
 INDEX = int(os.environ.get("INDEX", 1))
 
 app = Flask(__name__)
@@ -21,7 +23,6 @@ ROOT_RESOURCE_NAME = f"Default Protected Resource RS{INDEX}"
 
 
 class BearerAuth(AuthBase):
-
     def __init__(self, token):
         self.token = token
 
@@ -113,12 +114,13 @@ def uma_authentication_error_response():
 
 
 def validate_autz() -> bool:
-    authz = request.authorization
+    authz = request.headers.get("authorization")
     if authz is None:
         return False
-    if authz.type.lower() != "bearer":
+    rpt = parse_bearer(authz)
+    if rpt is None:
         return False
-    rpt = authz.token
+    print(f"RPT: {rpt}")
     introspection = json_response(
         requests.post(
             uma2_config["introspection_endpoint"],
@@ -128,16 +130,21 @@ def validate_autz() -> bool:
             # auth=BearerAuth(get_pat()),
             # but this is not rejected by Keycloak with 401:
             #   {"error":"invalid_request","error_description":"Authentication failed."}
-            data={"token": rpt},
+            data={
+                "token": rpt,
+                "token_type_hint": "requesting_party_token",
+            },
         )
     )
     if introspection["active"] != True:
         return False
 
+    print(introspection)
+
     # ISSUE-3, "permissions" is missing from the token introspection response.
-    check_permissions = False
+    check_permissions = True
     return not check_permissions or any(
-        perm[0]["resource_id"] == resource_id
+        perm["resource_id"] == resource_id
         and any(scope == SCOPE for scope in perm["resource_scopes"])
         for perm in introspection["permissions"]
     )
@@ -145,8 +152,7 @@ def validate_autz() -> bool:
 
 @app.route("/")
 def home():
-    authz = request.authorization
-    print(authz)
+    authz = request.headers.get("authorization")
     if not validate_autz():
         return uma_authentication_error_response()
     return "SECRET DATA"

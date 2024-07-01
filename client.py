@@ -30,7 +30,6 @@ CLIENT_BASIC_AUTHZ = HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
 
 
 class BearerAuth(AuthBase):
-
     def __init__(self, token):
         self.token = token
 
@@ -86,7 +85,6 @@ def oidc_login():
 
 @app.route("/oidc/callback")
 def oidc_callback():
-
     code = request.args.get("code")
     if code is None:
         abort(400, "Missing code")
@@ -147,7 +145,6 @@ def home():
 
 @app.route("/step1")
 def step1():
-
     oidc_state = session.get("oidc")
     if oidc_state is None:
         return redirect("/")
@@ -166,8 +163,8 @@ def step1():
 
     if auth.type.lower() != "uma":
         abort(400, "Unexpected WWW-Authenticate type from RS")
-    as_uri = auth.parameters.get("as_uri")
-    ticket = auth.parameters.get("ticket")
+    as_uri = auth.get("as_uri")
+    ticket = auth.get("ticket")
     if as_uri is None or ticket is None:
         abort(400, "Unexpected WWW-Authenticate from RS")
     if as_uri != AS_URI:

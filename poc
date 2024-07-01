@@ -41,6 +41,9 @@ case "$1" in
             rs2)
                 INDEX=2 run_rs -p8082
             ;;
+            bad-rs)
+                FLASK_APP=bad_rs.py flask run -p 8080
+            ;;
             *)
                 printf "Bad command\n" 2>&1 
                 exit 1

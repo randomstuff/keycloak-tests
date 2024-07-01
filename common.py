@@ -16,7 +16,6 @@ ASYMMETRIC_ALGS = ["RS256"]
 
 
 class BearerAuth(AuthBase):
-
     def __init__(self, token):
         self.token = token
 
@@ -100,7 +99,6 @@ class TokenResult:
 
 
 class OauthClient:
-
     authorization_server: str
     client_id: str
     client_secret: str
@@ -115,7 +113,6 @@ class OauthClient:
     jwk_client: PyJWKClient
 
     def __init__(self, authorization_server: str, client_id: str, client_secret: str):
-
         self.client_id = client_id
         self.client_secret = client_secret
         if client_secret is not None:
@@ -187,7 +184,7 @@ class OauthClient:
         return response.json()["ticket"]
 
     def request_oidc(self, username: str, password: str):
-        data={
+        data = {
             "grant_type": "password",
             "response_type": "code",
             "scope": "openid",
@@ -197,9 +194,7 @@ class OauthClient:
         if self.auth is None:
             data["client_id"] = self.client_id
         response = requests.post(
-            self.oidc_config["token_endpoint"],
-            auth=self.auth,
-            data=data
+            self.oidc_config["token_endpoint"], auth=self.auth, data=data
         )
         response.raise_for_status()
         return TokenResult.create(response.json())
@@ -271,7 +266,6 @@ class OauthClient:
         return response.json()
 
     def decode_jwt(self, token: str):
-
         header = extract_jwt_header(token)
         alg = header.get("alg")
         kid = header.get("kid")
@@ -285,7 +279,6 @@ class OauthClient:
             raise Exception("Unexpected alg")
 
     def get_authorization_server_jwks(self) -> dict:
-
         response = requests.get(self.oidc_config["jwks_uri"])
         response.raise_for_status()
         return response.json()
@@ -300,3 +293,11 @@ def make_client(client_id: str, client_secret: Optional[str] = None) -> OauthCli
         client_id=client_id,
         client_secret=client_secret,
     )
+
+
+def parse_bearer(value: str) -> Optional[str]:
+    tokens = value.split(" ")
+    if len(tokens) == 2 and tokens[0].lower() == "bearer":
+        return tokens[1]
+    else:
+        return None
