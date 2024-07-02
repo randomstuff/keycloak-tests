@@ -2,6 +2,10 @@
 
 docker=podman
 
+run_py_env() {
+    pipenv run "$@"
+}
+
 run_keycloak() {
 
     "$docker" run --rm --name poc_keycloak \
@@ -16,11 +20,11 @@ run_keycloak() {
 }
 
 run_client() {
-    FLASK_APP=client.py flask run "$@"
+    run_py_env env FLASK_APP=client.py flask run "$@"
 }
 
 run_rs() {
-    FLASK_APP=rs.py flask run "$@"
+    run_py_env env FLASK_APP=rs.py flask run "$@"
 }
 
 case "$1" in
@@ -42,7 +46,7 @@ case "$1" in
                 INDEX=2 run_rs -p8082
             ;;
             bad-rs)
-                FLASK_APP=bad_rs.py flask run -p 8080
+                run_py_env env FLASK_APP=bad_rs.py flask run -p 8080
             ;;
             *)
                 printf "Bad command\n" 2>&1 
