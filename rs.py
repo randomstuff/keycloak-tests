@@ -142,8 +142,7 @@ def validate_autz() -> bool:
     print(introspection)
 
     # ISSUE-3, "permissions" is missing from the token introspection response.
-    check_permissions = True
-    return not check_permissions or any(
+    return introspection["aud"] == CLIENT_ID and any(
         perm["resource_id"] == resource_id
         and any(scope == SCOPE for scope in perm["resource_scopes"])
         for perm in introspection["permissions"]
