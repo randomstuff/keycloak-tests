@@ -1,0 +1,63 @@
+#!/bin/sh
+
+set -e
+
+get_wso2is() {
+    (
+        mkdir dist/
+
+        cd dist/
+        wget https://github.com/wso2/product-is/archive/refs/tags/v6.0.0.tar.gz
+        tar xzf product-is-6.0.0.tar.gz
+
+        cd product-is-6.0.0
+        mkdir .m2
+        podman run -it --rm -v $(pwd)/.m2:/root/.m2 -v $(pwd):/srv -w /srv docker.io/library/maven:3.9.8-eclipse-temurin-11-alpine \
+            env JAVA_TOOL_OPTIONS="-Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true" \
+            mvn clean install -Dmaven.test.skip=true
+        cd ..
+
+        unzip product-is-6.0.0/modules/distribution/target/wso2is-6.0.0.zip
+
+        cd wso2is-6.0.0
+    )
+}
+
+run_wso2is() {
+    (
+        test -d dist/wso2is-6.0.0
+        cd dist/wso2is-6.0.0
+        podman run --name wso2is -it --rm -v$(pwd):/srv -w /srv -p9443:9443 -p9763:9763 docker.io/library/eclipse-temurin:11-jre-alpine \
+            env JAVA_TOOL_OPTIONS="-Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true" \
+            /srv/bin/wso2server.sh
+    )
+}
+
+case "$1" in
+    get)
+        case "$2" in
+            wso2is)
+                get_wso2is
+            ;;
+            *)
+                printf "Bad command\n" 2>&1 
+                exit 1
+            ;;
+        esac
+    ;;
+    run)
+        case "$2" in
+            wso2is)
+                run_wso2is
+            ;;
+            *)
+                printf "Bad command\n" 2>&1 
+                exit 1
+            ;;
+        esac
+    ;;
+    *)
+        printf "Bad command\n" 2>&1 
+        exit 1
+    ;;
+esac

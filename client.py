@@ -1,3 +1,5 @@
+# A simple UMA Client (currently targeting Keycloak, RS-owned resources)
+
 from urllib.parse import urlencode
 import secrets
 import os
@@ -205,4 +207,5 @@ def step1():
 
 
 @app.route("/step2")
-def step2(): ...
+def step2():
+    ...

@@ -15,7 +15,9 @@ rs2 = make_client("rs2", client_secret="rs1-secret")
 resource = rs1.declare_resource(
     type=RESOURCE_TYPE, scopes=["read", "write"], name=secrets.token_urlsafe(8)
 )
-client_tokens = client1.request_oidc(username="alice", password="alice")
+client_tokens = client1.request_password_grant(
+    username="alice", password="alice", scope="openid"
+)
 ticket = rs1.request_ticket(id=resource, scopes=["write"])
 
 rpt_tokens = client1.request_rpt(

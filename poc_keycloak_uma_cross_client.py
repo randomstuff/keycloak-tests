@@ -14,8 +14,12 @@ resource = rs1.declare_resource(
     type=RESOURCE_TYPE, scopes=["read", "write"], name=secrets.token_urlsafe(20)
 )
 
-client1_tokens = client1.request_oidc(username="alice", password="alice")
-client2_tokens = client2.request_oidc(username="alice", password="alice")
+client1_tokens = client1.request_password_grant(
+    username="alice", password="alice", scope="openid"
+)
+client2_tokens = client2.request_password_grant(
+    username="alice", password="alice", scope="openid"
+)
 
 ticket = rs1.request_ticket(id=resource, scopes=["write"])
 

@@ -1,3 +1,5 @@
+# A simple UMA Resource Server (currently targeting Keycloak, RS-owned resources)
+
 from werkzeug.datastructures import WWWAuthenticate
 from flask import Flask, request, Response
 import requests

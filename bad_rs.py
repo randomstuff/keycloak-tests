@@ -1,3 +1,5 @@
+# A simple malicious UMA Resource Server
+
 from werkzeug.datastructures import WWWAuthenticate
 from flask import Flask, request, Response
 import requests

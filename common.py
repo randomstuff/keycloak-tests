@@ -2,10 +2,12 @@ import json
 import base64
 from typing import Optional, Any, List
 from dataclasses import dataclass
+import secrets
+
 import jwt
 
 import requests
-from requests import Response
+from requests import Response, Session
 from requests.auth import AuthBase, HTTPBasicAuth
 
 from jwt.jwks_client import PyJWKClient
@@ -108,17 +110,27 @@ class OauthClient:
     uma2_config_endpoint: str
 
     oidc_config: dict[str, Any]
-    uma2_config: dict[str, Any]
+    uma2_config: Optional[dict[str, Any]]
+
+    session: Session
 
     jwk_client: PyJWKClient
 
-    def __init__(self, authorization_server: str, client_id: str, client_secret: str):
+    def __init__(
+        self,
+        authorization_server: str,
+        client_id: str,
+        client_secret: str,
+        session: Optional[Session] = None,
+    ):
         self.client_id = client_id
         self.client_secret = client_secret
         if client_secret is not None:
             self.auth = HTTPBasicAuth(client_id, client_secret)
         else:
             self.auth = None
+
+        self.session = session if session is not None else Session()
 
         self.authorization_server = authorization_server
         self.oidc_config_endpoint = (
@@ -128,8 +140,11 @@ class OauthClient:
             authorization_server + "/.well-known/uma2-configuration"
         )
 
-        self.oidc_config = requests.get(self.oidc_config_endpoint).json()
-        self.uma2_config = requests.get(self.uma2_config_endpoint).json()
+        self.oidc_config = session.get(self.oidc_config_endpoint).json()
+        try:
+            self.uma2_config = session.get(self.uma2_config_endpoint).json()
+        except:
+            self.uma2_config = None
 
         self.jwk_client = PyJWKClient(self.oidc_config["jwks_uri"])
 
@@ -139,7 +154,7 @@ class OauthClient:
             data["scope"] = scope
         if self.auth is None:
             data["client_id"] = self.client_id
-        response = requests.post(
+        response = self.session.post(
             self.uma2_config["token_endpoint"],
             auth=self.auth,
             data=data,
@@ -153,6 +168,7 @@ class OauthClient:
         name: Optional[str] = None,
         description: Optional[str] = None,
         type: Optional[str] = None,
+        auth: Optional[AuthBase] = None,
     ) -> str:
         data = {"resource_scopes": scopes}
         if name is not None:
@@ -161,18 +177,24 @@ class OauthClient:
             data["type"] = type
         if description is not None:
             data["description"] = description
-        response = requests.post(
+        if auth is None:
+            auth = BearerAuth(self.request_access_token().access_token)
+        response = self.session.post(
             self.uma2_config["resource_registration_endpoint"],
-            auth=BearerAuth(self.request_access_token().access_token),
+            auth=auth,
             json=data,
         )
         response.raise_for_status()
         return response.json()["_id"]
 
-    def request_ticket(self, id: str, scopes: List[str]):
-        response = requests.post(
+    def request_ticket(
+        self, id: str, scopes: List[str], auth: Optional[AuthBase] = None
+    ):
+        if auth is None:
+            auth = BearerAuth(self.request_access_token().access_token)
+        response = self.session.post(
             self.uma2_config["permission_endpoint"],
-            auth=BearerAuth(self.request_access_token().access_token),
+            auth=auth,
             json=[
                 {
                     "resource_id": id,
@@ -183,17 +205,25 @@ class OauthClient:
         response.raise_for_status()
         return response.json()["ticket"]
 
-    def request_oidc(self, username: str, password: str):
+    def request_password_grant(
+        self, username: str, password: str, scope: Optional[str] = None
+    ):
+        """
+        Password-credentials grant.
+
+        This is deprecated but is still quite useful for automated tests.
+        """
         data = {
             "grant_type": "password",
             "response_type": "code",
-            "scope": "openid",
             "username": username,
             "password": password,
         }
+        if scope is not None:
+            data["scope"] = scope
         if self.auth is None:
             data["client_id"] = self.client_id
-        response = requests.post(
+        response = self.session.post(
             self.oidc_config["token_endpoint"], auth=self.auth, data=data
         )
         response.raise_for_status()
@@ -227,7 +257,7 @@ class OauthClient:
             data["audience"] = audience
         if auth is None and self.auth is None:
             data["client_id"] = self.client_id
-        response = requests.post(
+        response = self.session.post(
             self.uma2_config["token_endpoint"],
             auth=auth if auth is not None else self.auth,
             data=data,
@@ -241,7 +271,7 @@ class OauthClient:
             data["token_type_hint"] = type
         if self.auth is None:
             data["client_id"] = self.client_id
-        response = requests.post(
+        response = self.session.post(
             self.oidc_config["introspection_endpoint"],
             auth=self.auth,
             data=data,
@@ -255,7 +285,7 @@ class OauthClient:
             data["token_type_hint"] = type
         if self.auth is None:
             data["client_id"] = self.client_id
-        response = requests.post(
+        response = self.session.post(
             self.uma2_config["introspection_endpoint"],
             # NOTE, the standard requires using the PAT but currently only works using client credentials
             auth=self.auth,
@@ -279,9 +309,62 @@ class OauthClient:
             raise Exception("Unexpected alg")
 
     def get_authorization_server_jwks(self) -> dict:
-        response = requests.get(self.oidc_config["jwks_uri"])
+        response = self.session.get(self.oidc_config["jwks_uri"])
         response.raise_for_status()
         return response.json()
+
+
+def register_client(
+    authorization_server: str,
+    redirect_uris: Optional[List[str]],
+    client_name: Optional[str] = None,
+    session: Optional[Session] = None,
+    auth: Optional[AuthBase] = None,
+    grant_types: Optional[List[str]] = None,
+) -> OauthClient:
+    if session is None:
+        session = Session()
+
+    response = session.get(authorization_server + "/.well-known/openid-configuration")
+    response.raise_for_status()
+    openid_config = response.json()
+
+    registration_endpoint = openid_config["registration_endpoint"]
+
+    req = {}
+    if client_name is not None:
+        req["client_name"] = client_name
+    if redirect_uris is not None:
+        req["redirect_uris"] = redirect_uris
+    if grant_types is not None:
+        req["grant_types"] = grant_types
+    response = session.post(
+        registration_endpoint,
+        auth=auth,
+        json=req,
+    )
+    response.raise_for_status()
+    res = response.json()
+    return OauthClient(
+        authorization_server=authorization_server,
+        client_id=res["client_id"],
+        client_secret=res["client_secret"],
+        session=session,
+    )
+
+
+UMA_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:uma-ticket"
+
+STANDARD_GRANT_TYPES = [
+    "authorization_code",
+    "implicit",
+    "password",
+    "client_credentials",
+    "refresh_token",
+    "urn:ietf:params:oauth:grant-type:saml2-bearer",
+]
+
+GRANT_TYPES = STANDARD_GRANT_TYPES + [UMA_GRANT_TYPE]
 
 
 AS_URI = "http://localhost:8180/realms/poc"

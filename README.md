@@ -1,18 +1,28 @@
-Minimal applications for testing UMA on Keycloak.
+# Tests about OAuth, OIDC, UMA, etc.
+
+* Scope: mostly security (and conformance as well)
+* Protocols:
+  * OAuth
+  * OIDC
+  * UMA
+* Servers:
+  * Keycloak (main focus for now)
+  * WSO2 IS (very limited)
 
 Warning: This software is not intended to be secure.
 For example,
 
 * it is vulnerable to CSRF;
 * it does not use PKCE;
-* it uses hardcoded credentials (and bad),
+* it uses hardcoded (and bad) credentials,
 * etc.
+
 
 ## Execution
 
 ### Running the test
 
-`test_rs_resource.py` is a standalone program
+`test_uma_keycloak_rs.py` is a standalone program
 which tests several UMA-related exchanges
 with a KeyCloak instance.
 
@@ -21,7 +31,7 @@ with a KeyCloak instance.
 ~~~
 
 ~~~sh
-python3 ./test_rs_resource.py
+python3 ./test_uma_keycloak_rs.py
 ~~~
 
 ### Running the environment
@@ -33,11 +43,11 @@ We can execute an execution environment with a KeyCloak instance, a client appli
 ~~~
 
 ~~~sh
-./poc run client
+./poc run client1
 ~~~
 
 ~~~sh
-./poc run rs
+./poc run rs1
 ~~~
 
 ~~~sh
@@ -62,11 +72,12 @@ We can execute an execution environment with a KeyCloak instance, a client appli
 
 ### Users
 
-|Realm  | Login | Password
-|-------|-------|---------
-|admin  | admin | admin
-|test   | alice | alice
-|test   | bob   | bob
+|Realm  | Login   | Password
+|-------|---------|---------
+|admin  | admin   | admin
+|test   | alice   | alice
+|test   | bob     | bob
+|test   | charlie | charlie
 
 ### Protected resources
 
@@ -76,7 +87,7 @@ We can execute an execution environment with a KeyCloak instance, a client appli
 | RS2         | Default Protected Resource RS2 | access
 
 
-## Unexpected behaviors
+## Unexpected behaviors in Keycloak
 
 #### ISSUE-1, RPT Request authentication
 
@@ -212,8 +223,26 @@ if the value recognized by Keycloak.
 as it seems to be more standard.
 
 
-## References:
+## Notes
 
-* [KeyCloak 25.0 Authorization Services Guide](https://www.keycloak.org/docs/25.0.0/authorization_services/)
+WSO2 IS:
+
+* Issuer: `https://localhost:9443/oauth2/token`
+* Configuration: `https://localhost:9443/oauth2/token/.well-known/openid-configuration`
+
+
+## References
+
+UMA:
+
 * [User-Managed Access (UMA) 2.0 Grant for OAuth 2.0 Authorization](https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html)
 * [Federated Authorization for User-Managed Access (UMA) 2.0](https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-federated-authz-2.0.html)
+
+KeyCloak:
+
+* [KeyCloak 25.0 Authorization Services Guide](https://www.keycloak.org/docs/25.0.0/authorization_services/)
+
+WSO2 IS:
+
+* [Configuring Access Delegation with OAuth 2.0](https://is.docs.wso2.com/en/5.9.0/learn/configuring-access-delegation-with-uma/)
+* [Unable to build the distribution from source](https://github.com/wso2/product-is/issues/20050)
