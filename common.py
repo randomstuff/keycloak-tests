@@ -130,7 +130,8 @@ class OauthClient:
         else:
             self.auth = None
 
-        self.session = session if session is not None else Session()
+        session = session if session is not None else Session()
+        self.session = session
 
         self.authorization_server = authorization_server
         self.oidc_config_endpoint = (
