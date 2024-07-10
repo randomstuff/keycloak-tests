@@ -13,64 +13,62 @@ Warning: This software is not intended to be secure.
 For example,
 
 * it is vulnerable to CSRF;
+* it uses the password grant;
 * it does not use PKCE;
 * it uses hardcoded (and bad) credentials,
 * etc.
 
 
-## Execution
+## Keycloak environment
 
-### Running the test
+### Tests
 
-`test_uma_keycloak_rs.py` is a standalone program
-which tests several UMA-related exchanges
-with a KeyCloak instance.
+`test_uma_keycloak_*.py` are tests which are intended
+to be excuted on the Keycloak instance:
 
 ~~~sh
-./poc run keycloak
+./poc-keycloak run keycloak
+python3 ./test_uma_keycloak_rs.py
 ~~~
 
+### Proof of concept
+
+`poc_keycloak_*.py` are proof of concepts to demonstrate some issue:
+
 ~~~sh
-python3 ./test_uma_keycloak_rs.py
+./poc-keycloak run keycloak
+python3 ./poc_keycloak_uma_cross_client.py
 ~~~
 
 ### Running the environment
 
-We can execute an execution environment with a KeyCloak instance, a client application and a resource server.
+KeyCloak environment:
 
 ~~~sh
-./poc run keycloak
+./poc-keycloak run keycloak
+./poc-keycloak run client1
+./poc-keycloak run rs1
+./poc-keycloak browse client1
 ~~~
 
-~~~sh
-./poc run client1
-~~~
+### Environment
 
-~~~sh
-./poc run rs1
-~~~
-
-~~~sh
-./poc browse
-~~~
-
-## Environment
-
-### Components
+#### Components
 
 * Keycloak (OAuth/UMA authorization server, OpenID Provider)
-* `client.py`, client application (web based)
-* `rs.py`, Target/true resource server
+* `uma_client_keycloak.py`, client application (web based)
+* `uma_rs_keycloak.py`, target/true resource server
+* `uma_bad_rs_keycloak.py`, malicious resource server
 
 | Application | URL                  | client_id | client_secret
-|-------------|----------------------|-----------|----
+|-------------|----------------------|-----------|--------------
 | Keycloak    |http://localhost:8180 |           |
 | Client1     |http://localhost:8091 | client1   | client1-secret
 | Client2     |http://localhost:8092 | client2   | client2-secret
 | RS1         |http://localhost:8081 | rs1       | rs1-secret
 | RS2         |http://localhost:8082 | rs2       | rs2-secret
 
-### Users
+#### Users
 
 |Realm  | Login   | Password
 |-------|---------|---------
@@ -79,15 +77,14 @@ We can execute an execution environment with a KeyCloak instance, a client appli
 |test   | bob     | bob
 |test   | charlie | charlie
 
-### Protected resources
+#### Protected resources
 
 | Application | Ressource name                 | Scope
 |-------------|--------------------------------|--------
 | RS1         | Default Protected Resource RS1 | access
 | RS2         | Default Protected Resource RS2 | access
 
-
-## Unexpected behaviors in Keycloak
+### Findings
 
 #### ISSUE-1, RPT Request authentication
 
@@ -105,17 +102,20 @@ For the following request:
 [
     {
         "resource_id": "...",
-        "resource_scopes": ["read"],
+        "resource_scopes": ["read"]
     }
 ]
 ~~~
 
-### ISSUE-2, RPT introspection authentication
+#### ISSUE-2, RPT introspection authentication
 
 Keycloak does not accept the PAT as authentication for the UMA introspection API. This fails with a 401:
 
 ~~~json
-{"error":"invalid_request","error_description":"Authentication failed."}
+{
+  "error":"invalid_request",
+  "error_description":"Authentication failed."
+}
 ~~~
 
 The UMA spec says:
@@ -127,7 +127,7 @@ and
 
 > Use of these endpoints assumes that the resource server has acquired OAuth client credentials from the authorization server by static or dynamic means, and has a valid PAT. Note: Although the resource identifiers that appear in permission and token introspection request messages could sufficiently identify the resource owner, the PAT is still required because it represents the resource owner's authorization to use the protection API, as noted in Section 1.3.
 
-### ISSUE-3, Missing permissions in RPT introspection
+#### ISSUE-3, Missing permissions in RPT introspection
 
 The UMA introspection of the RPT does not provide the "permissions" field.
 
@@ -223,9 +223,9 @@ if the value recognized by Keycloak.
 as it seems to be more standard.
 
 
-## Notes
+## WSO2 IS Environment
 
-WSO2 IS:
+Paths:
 
 * Issuer: `https://localhost:9443/oauth2/token`
 * Configuration: `https://localhost:9443/oauth2/token/.well-known/openid-configuration`
