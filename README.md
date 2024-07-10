@@ -27,7 +27,7 @@ For example,
 to be excuted on the Keycloak instance:
 
 ~~~sh
-./poc-keycloak run keycloak
+./env-keycloak run keycloak
 python3 ./test_uma_keycloak_rs.py
 ~~~
 
@@ -36,7 +36,7 @@ python3 ./test_uma_keycloak_rs.py
 `poc_keycloak_*.py` are proof of concepts to demonstrate some issue:
 
 ~~~sh
-./poc-keycloak run keycloak
+./env-keycloak run keycloak
 python3 ./poc_keycloak_uma_cross_client.py
 ~~~
 
@@ -45,10 +45,10 @@ python3 ./poc_keycloak_uma_cross_client.py
 KeyCloak environment:
 
 ~~~sh
-./poc-keycloak run keycloak
-./poc-keycloak run client1
-./poc-keycloak run rs1
-./poc-keycloak browse client1
+./env-keycloak run keycloak
+./env-keycloak run client1
+./env-keycloak run rs1
+./env-keycloak browse client1
 ~~~
 
 ### Environment
