@@ -514,22 +514,24 @@ dump_jwt(rs2_uma_rpt_response.json()["access_token"], "Bob's RPT for RS2")
 AUTHS = [
     ("RS1 credentials", CLIENT1_BASIC_AUTH),
     ("RS2 credentials", CLIENT1_BASIC_AUTH),
-    ("Bob access token on RS1", BearerAuth(bob_access_token)),
-    ("Bob access token on RS2", BearerAuth(bob_access_token2)),
-    ("Bob ID token on RS1", BearerAuth(bob_id_token)),
-    ("Bob ID token on RS2", BearerAuth(bob_id_token2)),
-    ("Bob refresh token on RS1", BearerAuth(bob_refresh_token)),
-    ("Bob ID token on RS2", BearerAuth(bob_refresh_token2)),
+    ("Bob access token on client1", BearerAuth(bob_access_token)),
+    ("Bob access token on client2", BearerAuth(bob_access_token2)),
+    ("Bob ID token on client1", BearerAuth(bob_id_token)),
+    ("Bob ID token on client2", BearerAuth(bob_id_token2)),
+    ("Bob refresh token on client1", BearerAuth(bob_refresh_token)),
+    ("Bob ID token on client2", BearerAuth(bob_refresh_token2)),
+    ("Bob RPT", BearerAuth(bob_rpt)),
 ]
 
 CLAIMS = [
     ("None", None),
-    ("Bob access token on RS1", bob_access_token),
-    ("Bob access token on RS2", bob_access_token2),
-    ("Bob ID token on RS1", bob_id_token),
-    ("Bob ID token on RS2", bob_id_token2),
-    ("Bob refresh token on RS1", bob_refresh_token),
-    ("Bob refresh token on RS2", bob_refresh_token2),
+    ("Bob access token on client1", bob_access_token),
+    ("Bob access token on client2", bob_access_token2),
+    ("Bob ID token on client1", bob_id_token),
+    ("Bob ID token on client2", bob_id_token2),
+    ("Bob refresh token on client1", bob_refresh_token),
+    ("Bob refresh token on client2", bob_refresh_token2),
+    ("Bob RPT", bob_rpt),
 ]
 
 for auth_name, auth in AUTHS:
