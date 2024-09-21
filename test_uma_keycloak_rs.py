@@ -82,7 +82,7 @@ rs_pat = rs_pat_response.json()["access_token"]
 dump_jwt(rs_pat, "PAT")
 rs_pat_auth = BearerAuth(rs_pat)
 
-# ### Step 2, declare resource for Alice
+# ### Step 2, declare resources for RS1
 
 print_header("Declare RS1's resource")
 rs_declaration_response = requests.post(
@@ -112,8 +112,8 @@ ticket_response = requests.post(
 )
 log_response(ticket_response)
 assert ticket_response.status_code == 201
-ticket = ticket_response.json()["ticket"]
-dump_jwt(ticket, "ticket")
+rs1_ticket = ticket_response.json()["ticket"]
+dump_jwt(rs1_ticket, "ticket")
 
 # ### Step 4, get OpenID ID token and access token for Bob
 
@@ -140,6 +140,32 @@ bob_refresh_token = oidc_token_response_body["refresh_token"]
 dump_jwt(bob_id_token, "Bob ID token (client 1)")
 dump_jwt(bob_access_token, "Bob OIDC access token (client 1)")
 dump_jwt(bob_refresh_token, "Bob OIDC refresh token (client 1)")
+
+
+print_header("Request OIDC for Bob (client2)")
+oidc_token_response2 = requests.post(
+    oidc_token_endpoint,
+    auth=CLIENT2_BASIC_AUTH,
+    data={
+        "grant_type": "password",
+        "response_type": "code",
+        "scope": "openid",
+        "username": BOB_LOGIN,
+        "password": BOB_PASSWORD,
+    },
+)
+log_response(oidc_token_response2)
+assert oidc_token_response2.status_code == 200
+oidc_token_response_body2 = oidc_token_response2.json()
+
+bob_id_token2 = oidc_token_response_body2["id_token"]
+bob_access_token2 = oidc_token_response_body2["access_token"]
+bob_refresh_token2 = oidc_token_response_body2["refresh_token"]
+
+dump_jwt(bob_id_token, "Bob ID token (client 1)")
+dump_jwt(bob_access_token, "Bob OIDC access token (client 1)")
+dump_jwt(bob_refresh_token, "Bob OIDC refresh token (client 1)")
+
 
 # ### Step 4b, get OpenID ID token and access token for Bob for client2
 
@@ -177,7 +203,7 @@ uma_rpt_response = requests.post(
     auth=CLIENT1_BASIC_AUTH,
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": ticket,
+        "ticket": rs1_ticket,
     },
 )
 log_response(uma_rpt_response)
@@ -189,7 +215,7 @@ uma_rpt_response = requests.post(
     auth=CLIENT1_BASIC_AUTH,
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": ticket,
+        "ticket": rs1_ticket,
         "claim_token_format": "http://openid.net/specs/openid-connect-core-1_0.html#IDToken",
         "claim_token": bob_id_token,
     },
@@ -208,9 +234,26 @@ uma_rpt_response = requests.post(
     auth=CLIENT2_BASIC_AUTH,
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": ticket,
+        "ticket": rs1_ticket,
         "claim_token_format": "http://openid.net/specs/openid-connect-core-1_0.html#IDToken",
         "claim_token": bob_id_token,
+    },
+)
+log_response(uma_rpt_response)
+assert uma_rpt_response.status_code == 200
+uma_rpt_response_content = uma_rpt_response.json()
+bob_rpt = uma_rpt_response_content["access_token"]
+dump_jwt(bob_rpt, "Bob's RPT")
+
+print_header("Request RPT for RS1's resource on behalf of Bob using Bob's access token")
+uma_rpt_response = requests.post(
+    uma2_token_endpoint,
+    auth=CLIENT1_BASIC_AUTH,
+    data={
+        "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
+        "ticket": rs1_ticket,
+        "claim_token_format": "http://openid.net/specs/openid-connect-core-1_0.html#IDToken",
+        "claim_token": bob_access_token,
     },
 )
 log_response(uma_rpt_response)
@@ -227,7 +270,7 @@ uma_rpt_response = requests.post(
     auth=BearerAuth(bob_access_token),
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": ticket,
+        "ticket": rs1_ticket,
     },
 )
 log_response(uma_rpt_response)
@@ -242,7 +285,7 @@ uma_rpt_response = requests.post(
     auth=BearerAuth(bob_access_token),
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": ticket,
+        "ticket": rs1_ticket,
         "claim_token_format": "http://openid.net/specs/openid-connect-core-1_0.html#IDToken",
         "claim_token": bob_id_token,
     },
@@ -313,7 +356,7 @@ uma_rpt_response = requests.post(
     auth=CLIENT1_BASIC_AUTH,
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": ticket,
+        "ticket": rs1_ticket,
         "claim_token_format": "https://openid.net/specs/openid-connect-core-1_0.html#IDToken",
         "claim_token": bob_id_token,
     },
@@ -328,7 +371,7 @@ uma_rpt_response = requests.post(
     auth=CLIENT1_BASIC_AUTH,
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": ticket,
+        "ticket": rs1_ticket,
         "claim_token_format": "urn:ietf:params:oauth:token-type:id_token",
         "claim_token": bob_id_token,
     },
@@ -343,7 +386,7 @@ uma_rpt_response = requests.post(
     auth=CLIENT1_BASIC_AUTH,
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": ticket,
+        "ticket": rs1_ticket,
         "claim_token_format": "urn:ietf:params:oauth:token-type:access_token",
         "claim_token": bob_access_token,
     },
@@ -358,7 +401,7 @@ uma_rpt_response = requests.post(
     auth=CLIENT1_BASIC_AUTH,
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": ticket,
+        "ticket": rs1_ticket,
         "claim_token_format": "urn:ietf:params:oauth:token-type:refresh_token",
         "claim_token": bob_access_token,
     },
@@ -465,3 +508,42 @@ rs2_uma_rpt_response = requests.post(
 log_response(rs2_uma_rpt_response)
 assert rs2_uma_rpt_response.status_code == 200
 dump_jwt(rs2_uma_rpt_response.json()["access_token"], "Bob's RPT for RS2")
+
+#
+
+AUTHS = [
+    ("RS1 credentials", CLIENT1_BASIC_AUTH),
+    ("RS2 credentials", CLIENT1_BASIC_AUTH),
+    ("Bob access token on RS1", BearerAuth(bob_access_token)),
+    ("Bob access token on RS2", BearerAuth(bob_access_token2)),
+    ("Bob ID token on RS1", BearerAuth(bob_id_token)),
+    ("Bob ID token on RS2", BearerAuth(bob_id_token2)),
+    ("Bob refresh token on RS1", BearerAuth(bob_refresh_token)),
+    ("Bob ID token on RS2", BearerAuth(bob_refresh_token2)),
+]
+
+CLAIMS = [
+    ("None", None),
+    ("Bob access token on RS1", bob_access_token),
+    ("Bob access token on RS2", bob_access_token2),
+    ("Bob ID token on RS1", bob_id_token),
+    ("Bob ID token on RS2", bob_id_token2),
+    ("Bob refresh token on RS1", bob_refresh_token),
+    ("Bob refresh token on RS2", bob_refresh_token2),
+]
+
+for auth_name, auth in AUTHS:
+    for claim_name, claim in CLAIMS:
+        data = {
+            "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
+            "ticket": rs1_ticket,
+        }
+        if claim is not None:
+            data["claim_token_format"] = "http://openid.net/specs/openid-connect-core-1_0.html#IDToken"
+            data["claim_token"] = claim
+        uma_rpt_response = requests.post(
+            uma2_token_endpoint,
+            auth=auth,
+            data=data,
+        )
+        print(f"{auth_name.ljust(25)}\t{claim_name.ljust(25)}\t{uma_rpt_response.status_code}")
