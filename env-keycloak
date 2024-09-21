@@ -13,7 +13,7 @@ run_keycloak() {
         -e KEYCLOAK_ADMIN_PASSWORD=admin \
         --network=host \
         -v "$(pwd)/import:/opt/keycloak/data/import" \
-        quay.io/keycloak/keycloak:25.0 \
+        quay.io/keycloak/keycloak:25.0.6 \
         start-dev \
         --http-port=8180 --import-realm
 

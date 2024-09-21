@@ -509,7 +509,7 @@ log_response(rs2_uma_rpt_response)
 assert rs2_uma_rpt_response.status_code == 200
 dump_jwt(rs2_uma_rpt_response.json()["access_token"], "Bob's RPT for RS2")
 
-#
+# Recap
 
 AUTHS = [
     ("RS1 credentials", CLIENT1_BASIC_AUTH),
