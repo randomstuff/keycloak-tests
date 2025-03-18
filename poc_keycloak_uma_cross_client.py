@@ -7,7 +7,6 @@ JWT_FORMAT = "urn:ietf:params:oauth:token-type:jwt"
 
 client1 = make_client("client1", client_secret="client1-secret")
 client2 = make_client("client2", client_secret="client2-secret")
-# client2 = make_client("client2", client_secret=None)
 rs1 = make_client("rs1", client_secret="rs1-secret")
 
 resource = rs1.declare_resource(

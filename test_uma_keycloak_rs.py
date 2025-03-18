@@ -52,7 +52,7 @@ uma2_introspection_endpoint = uma2_config["introspection_endpoint"]
 # ### Step 1, get a PAT for RS1
 
 # PAT request according to spec (does not work on Keycloak):
-print_header("Request RS's PAT with scope=uma_protection")
+print_header("Request RS1's PAT with scope=uma_protection")
 rs_pat_response = requests.post(
     uma2_token_endpoint,
     auth=RS1_BASIC_AUTH,
@@ -81,6 +81,22 @@ assert rs_pat_response.status_code == 200
 rs_pat = rs_pat_response.json()["access_token"]
 dump_jwt(rs_pat, "PAT")
 rs_pat_auth = BearerAuth(rs_pat)
+
+# (Alternative path) PAT request according to Keycloak doc but for client1:
+print_header("Request client1's PAT without scope")
+client1_pat_response = requests.post(
+    uma2_token_endpoint,
+    auth=CLIENT1_BASIC_AUTH,
+    data={
+        "grant_type": "client_credentials",
+    },
+)
+log_response(client1_pat_response)
+# assert client_pat_response.status_code == 200
+
+client1_pat = client1_pat_response.json()["access_token"]
+dump_jwt(client1_pat, "PAT")
+client1_pat_auth = BearerAuth(client1_pat)
 
 # ### Step 2, declare resources for RS1
 
@@ -115,6 +131,25 @@ assert ticket_response.status_code == 201
 rs1_ticket = ticket_response.json()["ticket"]
 dump_jwt(rs1_ticket, "ticket")
 
+# ### Step 3a, get ticket for RS's resource using client1 PAT
+
+if False:
+
+    print_header("Request permission ticket for RS1's resource using client1's PAT")
+    requested_permissions = [
+        {
+            "resource_id": resource_id,
+            "resource_scopes": [READ_SCOPE],
+        }
+    ]
+    ticket_response = requests.post(
+        permission_endpoint, json=requested_permissions, auth=client1_pat_auth
+    )
+    log_response(ticket_response)
+    assert ticket_response.status_code == 201
+    rs1_ticket = ticket_response.json()["ticket"]
+    dump_jwt(rs1_ticket, "ticket")
+
 # ### Step 4, get OpenID ID token and access token for Bob
 
 print_header("Request OIDC for Bob (client1)")
@@ -141,6 +176,7 @@ dump_jwt(bob_id_token, "Bob ID token (client 1)")
 dump_jwt(bob_access_token, "Bob OIDC access token (client 1)")
 dump_jwt(bob_refresh_token, "Bob OIDC refresh token (client 1)")
 
+# ### Step 4b, get OpenID ID token and access token for Bob for client2
 
 print_header("Request OIDC for Bob (client2)")
 oidc_token_response2 = requests.post(
@@ -165,33 +201,6 @@ bob_refresh_token2 = oidc_token_response_body2["refresh_token"]
 dump_jwt(bob_id_token, "Bob ID token (client 1)")
 dump_jwt(bob_access_token, "Bob OIDC access token (client 1)")
 dump_jwt(bob_refresh_token, "Bob OIDC refresh token (client 1)")
-
-
-# ### Step 4b, get OpenID ID token and access token for Bob for client2
-
-print_header("Request OIDC for Bob (client2)")
-oidc_token_response2 = requests.post(
-    oidc_token_endpoint,
-    auth=CLIENT2_BASIC_AUTH,
-    data={
-        "grant_type": "password",
-        "response_type": "code",
-        "scope": "openid",
-        "username": BOB_LOGIN,
-        "password": BOB_PASSWORD,
-    },
-)
-log_response(oidc_token_response2)
-assert oidc_token_response2.status_code == 200
-oidc_token_response_body2 = oidc_token_response2.json()
-
-bob_id_token2 = oidc_token_response_body2["id_token"]
-bob_access_token2 = oidc_token_response_body2["access_token"]
-bob_refresh_token2 = oidc_token_response_body2["refresh_token"]
-
-dump_jwt(bob_id_token2, "Bob ID token (client 2)")
-dump_jwt(bob_access_token2, "Bob OIDC access token (client 2)")
-dump_jwt(bob_refresh_token2, "Bob OIDC refresh token (client 2)")
 
 # ### Step 4, get RPT for Bob
 
@@ -534,6 +543,8 @@ CLAIMS = [
     ("Bob RPT", bob_rpt),
 ]
 
+print("|auth|claim|status|")
+print("|:--|:--|--:|")
 for auth_name, auth in AUTHS:
     for claim_name, claim in CLAIMS:
         data = {
@@ -541,11 +552,15 @@ for auth_name, auth in AUTHS:
             "ticket": rs1_ticket,
         }
         if claim is not None:
-            data["claim_token_format"] = "http://openid.net/specs/openid-connect-core-1_0.html#IDToken"
+            data["claim_token_format"] = (
+                "http://openid.net/specs/openid-connect-core-1_0.html#IDToken"
+            )
             data["claim_token"] = claim
         uma_rpt_response = requests.post(
             uma2_token_endpoint,
             auth=auth,
             data=data,
         )
-        print(f"{auth_name.ljust(25)}\t{claim_name.ljust(25)}\t{uma_rpt_response.status_code}")
+        print(
+            f"|{auth_name.ljust(25)}|{claim_name.ljust(25)}|{uma_rpt_response.status_code}|"
+        )

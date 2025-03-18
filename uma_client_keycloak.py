@@ -207,5 +207,4 @@ def step1():
 
 
 @app.route("/step2")
-def step2():
-    ...
+def step2(): ...

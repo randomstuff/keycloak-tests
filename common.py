@@ -80,7 +80,7 @@ def log_response(response: Response):
 
 
 def print_header(message: str):
-    print(f"\n\n\x1B[32m{message}\x1B[0m")
+    print(f"\n\n\x1b[32m{message}\x1b[0m")
 
 
 @dataclass
