@@ -206,7 +206,7 @@ dump_jwt(bob_refresh_token, "Bob OIDC refresh token (client 1)")
 
 # AFAIU, according to the spec, I should use client authentication of the token endpoint like this.
 # I would expect this to trigger an interactive claim gathering in order to authenticate the user.
-print_header("Request RPT for RS's resource without claim_token")
+print_header("Request RPT for RS1's resource without claim_token")
 uma_rpt_response = requests.post(
     uma2_token_endpoint,
     auth=CLIENT1_BASIC_AUTH,
@@ -517,50 +517,3 @@ rs2_uma_rpt_response = requests.post(
 log_response(rs2_uma_rpt_response)
 assert rs2_uma_rpt_response.status_code == 200
 dump_jwt(rs2_uma_rpt_response.json()["access_token"], "Bob's RPT for RS2")
-
-# Recap
-
-AUTHS = [
-    ("RS1 credentials", CLIENT1_BASIC_AUTH),
-    ("RS2 credentials", CLIENT1_BASIC_AUTH),
-    ("Bob access token on client1", BearerAuth(bob_access_token)),
-    ("Bob access token on client2", BearerAuth(bob_access_token2)),
-    ("Bob ID token on client1", BearerAuth(bob_id_token)),
-    ("Bob ID token on client2", BearerAuth(bob_id_token2)),
-    ("Bob refresh token on client1", BearerAuth(bob_refresh_token)),
-    ("Bob ID token on client2", BearerAuth(bob_refresh_token2)),
-    ("Bob RPT", BearerAuth(bob_rpt)),
-]
-
-CLAIMS = [
-    ("None", None),
-    ("Bob access token on client1", bob_access_token),
-    ("Bob access token on client2", bob_access_token2),
-    ("Bob ID token on client1", bob_id_token),
-    ("Bob ID token on client2", bob_id_token2),
-    ("Bob refresh token on client1", bob_refresh_token),
-    ("Bob refresh token on client2", bob_refresh_token2),
-    ("Bob RPT", bob_rpt),
-]
-
-print("|auth|claim|status|")
-print("|:--|:--|--:|")
-for auth_name, auth in AUTHS:
-    for claim_name, claim in CLAIMS:
-        data = {
-            "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-            "ticket": rs1_ticket,
-        }
-        if claim is not None:
-            data["claim_token_format"] = (
-                "http://openid.net/specs/openid-connect-core-1_0.html#IDToken"
-            )
-            data["claim_token"] = claim
-        uma_rpt_response = requests.post(
-            uma2_token_endpoint,
-            auth=auth,
-            data=data,
-        )
-        print(
-            f"|{auth_name.ljust(25)}|{claim_name.ljust(25)}|{uma_rpt_response.status_code}|"
-        )
