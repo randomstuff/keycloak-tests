@@ -94,6 +94,36 @@ assert ticket_response.status_code == 201
 rs1_ticket = ticket_response.json()["ticket"]
 dump_jwt(rs1_ticket, "ticket")
 
+
+print_header("Declare RS1's second resource")
+rs_declaration_response = requests.post(
+    resource_registration_endpoint,
+    auth=rs_pat_auth,
+    json={
+        "name": "RS1's Resource #" + secrets.token_urlsafe(8),
+        "type": RESOURCE_TYPE,
+        "resource_scopes": [READ_SCOPE, WRITE_SCOPE],
+    },
+)
+log_response(rs_declaration_response)
+assert rs_declaration_response.status_code == 201
+resource_id2 = rs_declaration_response.json()["_id"]
+
+print_header("Request permission ticket for RS1's sedonc resource")
+requested_permissions = [
+    {
+        "resource_id": resource_id2,
+        "resource_scopes": [READ_SCOPE],
+    }
+]
+ticket_response = requests.post(
+    permission_endpoint, json=requested_permissions, auth=rs_pat_auth
+)
+log_response(ticket_response)
+assert ticket_response.status_code == 201
+rs1_ticket2 = ticket_response.json()["ticket"]
+dump_jwt(rs1_ticket2, "ticket")
+
 print_header("Request OIDC for Bob (client1)")
 oidc_token_response = requests.post(
     oidc_token_endpoint,
@@ -113,13 +143,13 @@ bob_id_token = oidc_token_response_body["id_token"]
 bob_access_token = oidc_token_response_body["access_token"]
 bob_refresh_token = oidc_token_response_body["refresh_token"]
 
-print_header("Request RPT for RS1's resource on behalf of Bob using Bob's ID token")
+print_header("Request RPT for RS1's resource using Bob's ID token claim and client1 auth")
 uma_rpt_response = requests.post(
     uma2_token_endpoint,
     auth=CLIENT1_BASIC_AUTH,
     data={
         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-        "ticket": rs1_ticket,
+        "ticket": rs1_ticket2,
         "claim_token_format": "http://openid.net/specs/openid-connect-core-1_0.html#IDToken",
         "claim_token": bob_id_token,
     },
@@ -171,30 +201,27 @@ bob_refresh_token2 = oidc_token_response_body2["refresh_token"]
 # Recap
 
 AUTHS = [
-    ("RS1 credentials", CLIENT1_BASIC_AUTH),
-    ("RS2 credentials", CLIENT1_BASIC_AUTH),
+    ("RS1 credentials", RS1_BASIC_AUTH),
+    ("Client1 credentials", CLIENT1_BASIC_AUTH),
     ("Bob access token on client1", BearerAuth(bob_access_token)),
-    ("Bob access token on client2", BearerAuth(bob_access_token2)),
+    # ("Bob RPT", BearerAuth(bob_rpt)),
     ("Bob ID token on client1", BearerAuth(bob_id_token)),
-    ("Bob ID token on client2", BearerAuth(bob_id_token2)),
     ("Bob refresh token on client1", BearerAuth(bob_refresh_token)),
-    ("Bob ID token on client2", BearerAuth(bob_refresh_token2)),
-    ("Bob RPT", BearerAuth(bob_rpt)),
 ]
 
 CLAIMS = [
     ("None", None),
     ("Bob access token on client1", bob_access_token),
-    ("Bob access token on client2", bob_access_token2),
-    ("Bob ID token on client1", bob_id_token),
-    ("Bob ID token on client2", bob_id_token2),
-    ("Bob refresh token on client1", bob_refresh_token),
-    ("Bob refresh token on client2", bob_refresh_token2),
-    ("Bob RPT", bob_rpt),
+    # ("Bob ID token on client1", bob_id_token),    
+    # ("Bob refresh token on client1", bob_refresh_token),
+    # ("Bob RPT", bob_rpt),
+    # ("Bob access token on client2", bob_access_token2),
+    # ("Bob ID token on client2", bob_id_token2),
+    # ("Bob refresh token on client2", bob_refresh_token2),
 ]
 
 print_header("Summary")
-print("|auth|claim|status|")
+print("|Authentication|Claim|Status|")
 print("|:--|:--|--:|")
 for auth_name, auth in AUTHS:
     for claim_name, claim in CLAIMS:
